@@ -235,41 +235,53 @@ if [[ -n "$signing_identity" && -n "$notary_profile" ]]; then
     ditto -c -k --keepParent "$bundle_dir" "$zip_path"
 fi
 
-# --- Styled DMG creation ---
-dmg_bg="$repo_root/Assets/Brand/dmg-background@2x.png"
+# --- Styled DMG creation (optional) ---
+# create-dmg is not part of macOS; skip gracefully when it is missing so the
+# .app bundle and .zip are still produced on machines without it installed.
+if command -v create-dmg >/dev/null 2>&1; then
+    dmg_bg="$repo_root/Assets/Brand/dmg-background@2x.png"
 
-create-dmg \
-    --volname "$app_name" \
-    --background "$dmg_bg" \
-    --window-pos 200 120 \
-    --window-size 660 400 \
-    --icon-size 96 \
-    --text-size 13 \
-    --icon "$app_name.app" 180 210 \
-    --hide-extension "$app_name.app" \
-    --app-drop-link 480 210 \
-    --no-internet-enable \
-    "$dmg_path" \
-    "$bundle_dir"
+    create-dmg \
+        --volname "$app_name" \
+        --background "$dmg_bg" \
+        --window-pos 200 120 \
+        --window-size 660 400 \
+        --icon-size 96 \
+        --text-size 13 \
+        --icon "$app_name.app" 180 210 \
+        --hide-extension "$app_name.app" \
+        --app-drop-link 480 210 \
+        --no-internet-enable \
+        "$dmg_path" \
+        "$bundle_dir"
 
-# Sign the DMG itself (required before notarization)
-if [[ -n "$signing_identity" ]]; then
-    codesign \
-        --force \
-        --sign "$signing_identity" \
-        --timestamp \
-        "$dmg_path"
-fi
+    # Sign the DMG itself (required before notarization)
+    if [[ -n "$signing_identity" ]]; then
+        codesign \
+            --force \
+            --sign "$signing_identity" \
+            --timestamp \
+            "$dmg_path"
+    fi
 
-# Notarize and staple the DMG
-if [[ -n "$signing_identity" && -n "$notary_profile" ]]; then
-    xcrun notarytool submit "$dmg_path" --keychain-profile "$notary_profile" --wait
-    xcrun stapler staple -v "$dmg_path"
+    # Notarize and staple the DMG
+    if [[ -n "$signing_identity" && -n "$notary_profile" ]]; then
+        xcrun notarytool submit "$dmg_path" --keychain-profile "$notary_profile" --wait
+        xcrun stapler staple -v "$dmg_path"
+    fi
+    dmg_created=true
+else
+    echo "WARNING: create-dmg not found — skipping DMG creation. The .app bundle and .zip are still available." >&2
+    dmg_created=false
 fi
 
 echo "Bundle: $bundle_dir"
 echo "Archive: $zip_path"
-echo "DMG: $dmg_path"
+if [[ "$dmg_created" == "true" ]]; then
+    echo "DMG: $dmg_path"
+else
+    echo "DMG: skipped (create-dmg not installed)"
+fi
 if [[ -n "$signing_identity" ]]; then
     echo "Signed with identity: $signing_identity"
 else
