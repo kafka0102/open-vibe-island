@@ -1,5 +1,5 @@
-// Open Island plugin for OpenCode
-// Bridges OpenCode events to the Open Island desktop app via Unix socket.
+// Open Island 2 plugin for OpenCode
+// Bridges OpenCode events to the Open Island 2 desktop app via Unix socket.
 // Install: copy to ~/.config/opencode/plugins/open-island.js
 import { connect } from "net";
 import { appendFileSync } from "fs";
@@ -12,7 +12,7 @@ function debugLog(msg) {
 
 const SOCKET_PATH =
   process.env.OPEN_ISLAND_SOCKET_PATH ||
-  `${process.env.HOME || homedir()}/Library/Application Support/OpenIsland/bridge.sock`;
+  `${process.env.HOME || homedir()}/Library/Application Support/OpenIsland2/bridge.sock`;
 
 function encodeEnvelope(command) {
   return JSON.stringify({ type: "command", command }) + "\n";
@@ -367,7 +367,7 @@ export default async ({ client, serverUrl }) => {
         // Regular events — fire and forget
         await sendToSocket(mapped);
       } catch {
-        // Fail open: if Open Island is unavailable, don't block OpenCode
+        // Fail open: if Open Island 2 is unavailable, don't block OpenCode
       }
     },
 

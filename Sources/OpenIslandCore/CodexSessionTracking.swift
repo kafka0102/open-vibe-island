@@ -180,7 +180,7 @@ public final class CodexSessionStore: @unchecked Sendable {
 
     public static var defaultDirectoryURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/open-island", isDirectory: true)
+            .appendingPathComponent("Library/Application Support/open-island2", isDirectory: true)
     }
 
     public static var defaultFileURL: URL {

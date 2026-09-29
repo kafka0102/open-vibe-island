@@ -10,7 +10,7 @@ final class OpenIslandAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.disableAutomaticTermination(
-            "Open Island should remain active while monitoring local agent sessions."
+            "Open Island 2 should remain active while monitoring local agent sessions."
         )
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApp.setActivationPolicy(model.showDockIcon ? .regular : .accessory)
@@ -96,7 +96,7 @@ struct OpenIslandApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        Window("Open Island Settings", id: "settings") {
+        Window("Open Island 2 Settings", id: "settings") {
             SettingsWindowContent(model: appDelegate.model)
         }
         .windowResizability(.contentMinSize)

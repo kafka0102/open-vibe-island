@@ -30,7 +30,7 @@ def default_socket_path() -> str:
     path = os.environ.get("OPEN_ISLAND_SOCKET_PATH") or os.environ.get("VIBE_ISLAND_SOCKET_PATH")
     if path:
         return path
-    return str(Path.home() / "Library/Application Support/OpenIsland/bridge.sock")
+    return str(Path.home() / "Library/Application Support/OpenIsland2/bridge.sock")
 
 
 def repo_root() -> Path:

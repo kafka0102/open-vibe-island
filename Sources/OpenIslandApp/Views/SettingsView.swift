@@ -77,7 +77,7 @@ enum SettingsSection: String, CaseIterable {
         switch self {
         case .system:   lang.t("settings.section.system")
         case .advanced: lang.t("settings.section.advanced")
-        case .app:      "Open Island"
+        case .app:      "Open Island 2 2"
         }
     }
 
@@ -490,7 +490,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove the Open Island plugin from ~/.config/opencode/plugins/.")
+                    Text("This will remove the Open Island 2 plugin from ~/.config/opencode/plugins/.")
                 }
 
                 hookRow(
@@ -507,7 +507,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.qoder/settings.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.qoder/settings.json.")
                 }
 
                 hookRow(
@@ -524,7 +524,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.qwen/settings.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.qwen/settings.json.")
                 }
 
                 hookRow(
@@ -541,7 +541,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.factory/settings.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.factory/settings.json.")
                 }
 
                 hookRow(
@@ -558,7 +558,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.codebuddy/settings.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.codebuddy/settings.json.")
                 }
 
                 hookRow(
@@ -576,7 +576,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove the Open Island hooks from ~/.cursor/hooks.json.")
+                    Text("This will remove the Open Island 2 hooks from ~/.cursor/hooks.json.")
                 }
 
                 hookRow(
@@ -593,7 +593,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.gemini/settings.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.gemini/settings.json.")
                 }
 
                 hookRow(
@@ -610,7 +610,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.kimi/config.toml.")
+                    Text("This will remove Open Island 2 hooks from ~/.kimi/config.toml.")
                 }
 
                 hookRow(
@@ -628,7 +628,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove Open Island hooks from ~/.grok/hooks/open-island.json.")
+                    Text("This will remove Open Island 2 hooks from ~/.grok/hooks/open-island.json.")
                 }
 
                 hookRow(
@@ -646,7 +646,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove the Open Island extension from ~/.pi/agent/extensions/.")
+                    Text("This will remove the Open Island 2 extension from ~/.pi/agent/extensions/.")
                 }
 
                 hookRow(
@@ -664,7 +664,7 @@ struct SetupSettingsPane: View {
                     }
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
-                    Text("This will remove the Open Island extension from ~/.omp/agent/extensions/.")
+                    Text("This will remove the Open Island 2 extension from ~/.omp/agent/extensions/.")
                 }
             }
 
@@ -1178,7 +1178,7 @@ struct RemoteConnectionSection: View {
                 remoteSetupStep(
                     number: "1",
                     title: "Deploy hooks to remote server",
-                    description: "Run from the Open Island repo directory:",
+                    description: "Run from the Open Island 2 repo directory:",
                     command: setupCommand
                 )
 

@@ -360,7 +360,7 @@ public final class BridgeServer: @unchecked Sendable {
                     phase = .running
                 case let .deny(message, _):
                     directive = CursorHookDirective(continue: true, permission: .deny, agentMessage: message)
-                    summary = message ?? "Permission denied in Open Island."
+                    summary = message ?? "Permission denied in Open Island 2."
                     phase = .completed
                 }
 
@@ -407,10 +407,10 @@ public final class BridgeServer: @unchecked Sendable {
                 : "Permission approved. Codex continued the command."
             let deniedSummary: String = {
                 if case let .deny(message, _) = resolution {
-                    return message ?? "Permission denied in Open Island."
+                    return message ?? "Permission denied in Open Island 2."
                 }
 
-                return "Permission denied in Open Island."
+                return "Permission denied in Open Island 2."
             }()
 
             localState.resolvePermission(sessionID: sessionID, resolution: resolution)
@@ -1842,7 +1842,7 @@ public final class BridgeServer: @unchecked Sendable {
             .actionableStateResolved(
                 ActionableStateResolved(
                     sessionID: sessionID,
-                    summary: "Approval was handled outside Open Island.",
+                    summary: "Approval was handled outside Open Island 2.",
                     timestamp: .now
                 )
             )
@@ -1940,7 +1940,7 @@ public final class BridgeServer: @unchecked Sendable {
             .actionableStateResolved(
                 ActionableStateResolved(
                     sessionID: sessionID,
-                    summary: "Approval was handled outside Open Island.",
+                    summary: "Approval was handled outside Open Island 2.",
                     timestamp: .now
                 )
             )
@@ -2180,8 +2180,8 @@ public final class BridgeServer: @unchecked Sendable {
             phase = .running
 
         case let (.permission(_), .deny(message, _)):
-            directive = .deny(reason: message ?? "Permission denied in Open Island.")
-            summary = message ?? "Permission denied in Open Island."
+            directive = .deny(reason: message ?? "Permission denied in Open Island 2.")
+            summary = message ?? "Permission denied in Open Island 2."
             phase = .completed
 
         case (.question, .allowOnce):
@@ -2256,7 +2256,7 @@ public final class BridgeServer: @unchecked Sendable {
             .actionableStateResolved(
                 ActionableStateResolved(
                     sessionID: sessionID,
-                    summary: "Approval was handled outside Open Island.",
+                    summary: "Approval was handled outside Open Island 2.",
                     timestamp: .now
                 )
             )
@@ -2929,12 +2929,12 @@ public final class BridgeServer: @unchecked Sendable {
         case (.preToolUse, .allowOnce):
             response = .acknowledged
         case let (.preToolUse, .deny(message, _)):
-            response = .codexHookDirective(.deny(reason: message ?? "Permission denied in Open Island."))
+            response = .codexHookDirective(.deny(reason: message ?? "Permission denied in Open Island 2."))
         case (.permissionRequest, .allowOnce):
             response = .codexHookDirective(.permissionRequest(.allow))
         case let (.permissionRequest, .deny(message, _)):
             response = .codexHookDirective(
-                .permissionRequest(.deny(message: message ?? "Permission denied in Open Island."))
+                .permissionRequest(.deny(message: message ?? "Permission denied in Open Island 2."))
             )
         case (.sessionStart, _), (.postToolUse, _), (.userPromptSubmit, _), (.stop, _):
             assertionFailure("Unexpected Codex hook waiting for permission.")
@@ -2967,9 +2967,9 @@ public final class BridgeServer: @unchecked Sendable {
 
         case let (.permission(_), .deny(message, interrupt)):
             directive = .permissionRequest(
-                .deny(message: message ?? "Permission denied in Open Island.", interrupt: interrupt)
+                .deny(message: message ?? "Permission denied in Open Island 2.", interrupt: interrupt)
             )
-            summary = message ?? "Permission denied in Open Island."
+            summary = message ?? "Permission denied in Open Island 2."
             phase = .completed
 
         case let (.question(payload, _), .allowOnce(updatedInput, updatedPermissions)):

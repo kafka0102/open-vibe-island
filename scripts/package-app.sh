@@ -8,8 +8,8 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
 fi
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
-app_name="${OPEN_ISLAND_APP_NAME:-Open Island}"
-bundle_identifier="${OPEN_ISLAND_BUNDLE_ID:-app.openisland.dev}"
+app_name="${OPEN_ISLAND_APP_NAME:-Open Island 2}"
+bundle_identifier="${OPEN_ISLAND_BUNDLE_ID:-app.openisland2.dev}"
 version="${OPEN_ISLAND_VERSION:-0.1.0}"
 build_number="${OPEN_ISLAND_BUILD_NUMBER:-$(git -C "$repo_root" rev-list --count HEAD 2>/dev/null || echo 1)}"
 package_root="${OPEN_ISLAND_PACKAGE_ROOT:-$repo_root/output/package}"
@@ -119,13 +119,11 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Open Island needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
+    <string>Open Island 2 needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>${OPEN_ISLAND_EDDSA_PUBLIC_KEY:-3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=}</string>
 </dict>

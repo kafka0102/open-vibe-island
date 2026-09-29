@@ -1,4 +1,4 @@
-// Open Island extension for Pi and Oh My Pi.
+// Open Island 2 extension for Pi and Oh My Pi.
 // Installed into ~/.pi/agent/extensions or ~/.omp/agent/extensions.
 import { connect } from "node:net";
 import { homedir } from "node:os";
@@ -8,7 +8,7 @@ const AGENT_SOURCE = "__OPEN_ISLAND_PI_SOURCE__";
 const SESSION_PREFIX = AGENT_SOURCE === "oh-my-pi" ? "omp" : "pi";
 const SOCKET_PATH =
   process.env.OPEN_ISLAND_SOCKET_PATH ||
-  `${process.env.HOME || homedir()}/Library/Application Support/OpenIsland/bridge.sock`;
+  `${process.env.HOME || homedir()}/Library/Application Support/OpenIsland2/bridge.sock`;
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 15_000;
 const MAX_TIMER_INTERVAL_MS = 2_147_483_647;
 

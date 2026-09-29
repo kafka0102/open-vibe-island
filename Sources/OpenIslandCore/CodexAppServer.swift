@@ -154,7 +154,7 @@ public final class CodexAppServerClient: @unchecked Sendable {
         }
         _ = try await sendRequest(
             method: "initialize",
-            params: InitializeParams(clientInfo: .init(name: "OpenIsland", version: "1.0.0"))
+            params: InitializeParams(clientInfo: .init(name: "OpenIsland2", version: "1.0.0"))
         )
     }
 

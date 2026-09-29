@@ -69,7 +69,7 @@ public enum ClaudeStatusLineInstallationError: LocalizedError, Sendable {
         case .wrappableCommandMissing:
             return "No existing statusLine command was found to wrap."
         case let .wrapperWouldRecurse(command):
-            return "Refusing to wrap Open Island's own status line script (\(command)); the wrapper would call itself forever."
+            return "Refusing to wrap Open Island 2's own status line script (\(command)); the wrapper would call itself forever."
         }
     }
 }
@@ -98,7 +98,7 @@ public final class ClaudeStatusLineInstallationManager: @unchecked Sendable {
     public init(
         claudeDirectory: URL = ClaudeConfigDirectory.resolved(),
         scriptDirectoryURL: URL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".open-island", isDirectory: true)
+            .appendingPathComponent(".open-island2", isDirectory: true)
             .appendingPathComponent("bin", isDirectory: true),
         legacyScriptDirectoryURL: URL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".vibe-island", isDirectory: true)
@@ -430,7 +430,7 @@ public final class ClaudeStatusLineInstallationManager: @unchecked Sendable {
         #"""
         #!/bin/bash
         # Claude Code StatusLine Script (wrapper mode)
-        # Auto-configured by Open Island.
+        # Auto-configured by Open Island 2.
         # The delegate script holds the user's original statusLine.command.
         # Keep the rate_limits cache line intact — it feeds the notch usage panel.
         # The re-entry guard stops a delegate that loops back here from forking forever.
@@ -447,21 +447,21 @@ public final class ClaudeStatusLineInstallationManager: @unchecked Sendable {
     /// from `settings.json`, so embedding it as a script body runs with identical semantics
     /// without the escaping problems of `bash -c "$ORIG"`.
     public static func wrappedDelegateScript(originalCommand: String) -> String {
-        "#!/bin/bash\n# Original Claude Code statusLine.command preserved by Open Island.\n\(originalCommand)\n"
+        "#!/bin/bash\n# Original Claude Code statusLine.command preserved by Open Island 2.\n\(originalCommand)\n"
     }
 
     public static func managedScript(cacheURL: URL = managedCacheURL) -> String {
         #"""
         #!/bin/bash
         # Claude Code StatusLine Script
-        # Auto-configured by Open Island
+        # Auto-configured by Open Island 2
         # FOR AI ASSISTANTS EDITING THIS FILE:
         # This script receives JSON from Claude Code via stdin on
         # every assistant message. The user wants to customize their
         # status line display, so please ADD your code to this file.
         # Do NOT create a separate script or change statusLine.command.
         # IMPORTANT: Keep the rate_limits cache line below intact.
-        # It feeds usage data (5h/7d quotas) to the Open Island
+        # It feeds usage data (5h/7d quotas) to the Open Island 2
         # Notch panel. Removing it will degrade the usage display.
         input=$(cat)
         _rl=$(echo "$input" | jq -c '.rate_limits // empty' 2>/dev/null)

@@ -72,7 +72,7 @@ public enum ManagedHooksBinary {
         fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent("Library", isDirectory: true)
             .appendingPathComponent("Application Support", isDirectory: true)
-            .appendingPathComponent("OpenIsland", isDirectory: true)
+            .appendingPathComponent("OpenIsland2", isDirectory: true)
             .appendingPathComponent("bin", isDirectory: true)
     }
 

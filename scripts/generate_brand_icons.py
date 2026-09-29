@@ -333,7 +333,7 @@ def write_appiconset_contents_json(path: Path) -> None:
     contents = {
         "images": images,
         "info": {
-            "author": "app.openisland.dev",
+            "author": "app.openisland2.dev",
             "version": 1,
         },
     }

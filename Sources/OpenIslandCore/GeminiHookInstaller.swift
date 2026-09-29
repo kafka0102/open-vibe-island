@@ -130,7 +130,7 @@ public enum GeminiHookInstaller {
         let hook: [String: Any] = [
             "type": "command",
             "command": hookCommand,
-            "name": "Open Island"
+            "name": "Open Island 2"
         ]
 
         var group: [String: Any] = [

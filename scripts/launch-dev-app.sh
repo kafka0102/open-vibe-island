@@ -15,7 +15,7 @@ done
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 brand_script="$repo_root/scripts/generate_brand_icons.py"
 brand_icon="$repo_root/Assets/Brand/OpenIsland.icns"
-bundle_dir="$HOME/Applications/Open Island Dev.app"
+bundle_dir="$HOME/Applications/Open Island 2 Dev.app"
 plist_path="$bundle_dir/Contents/Info.plist"
 bundle_binary="$bundle_dir/Contents/MacOS/OpenIslandApp"
 
@@ -49,8 +49,8 @@ fi
 mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources" "$bundle_dir/Contents/Frameworks"
 
 # Kill any running instance before copying so the binary isn't locked.
-osascript -e 'tell application "Open Island Dev" to quit' 2>/dev/null || true
-pkill -9 -f "Open Island Dev" 2>/dev/null || true
+osascript -e 'tell application "Open Island 2 Dev" to quit' 2>/dev/null || true
+pkill -9 -f "Open Island 2 Dev" 2>/dev/null || true
 sleep 2
 
 command cp "$app_binary" "$bundle_binary"
@@ -87,13 +87,13 @@ cat > "$plist_path" <<EOF
     <key>CFBundleExecutable</key>
     <string>OpenIslandApp</string>
     <key>CFBundleIdentifier</key>
-    <string>app.openisland.dev</string>
+    <string>app.openisland2.dev</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleIconFile</key>
     <string>OpenIsland</string>
     <key>CFBundleName</key>
-    <string>Open Island Dev</string>
+    <string>Open Island 2 Dev</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -103,13 +103,11 @@ cat > "$plist_path" <<EOF
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Open Island needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
+    <string>Open Island 2 needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=</string>
 </dict>

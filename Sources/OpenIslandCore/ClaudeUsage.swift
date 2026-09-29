@@ -35,7 +35,7 @@ public struct ClaudeUsageSnapshot: Equatable, Codable, Sendable {
 }
 
 public enum ClaudeUsageLoader {
-    public static let defaultCacheURL = URL(fileURLWithPath: "/tmp/open-island-rl.json")
+    public static let defaultCacheURL = URL(fileURLWithPath: "/tmp/open-island2-rl.json")
     public static let legacyCacheURL = URL(fileURLWithPath: "/tmp/vibe-island-rl.json")
 
     public static func load() throws -> ClaudeUsageSnapshot? {
