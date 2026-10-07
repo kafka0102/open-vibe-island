@@ -862,9 +862,126 @@ struct GrokHooksTests {
         #expect(state.session(id: "grok-ended-1")?.isSessionEnded == true)
         #expect(state.session(id: "grok-ended-1")?.isVisibleInIsland == false)
     }
+
+    @Test
+    func claudeDecoderDropsGrokAssistantReply() throws {
+        let payload = try JSONDecoder().decode(ClaudeHookPayload.self, from: grokCompatStopJSON(answer: "The real Grok reply."))
+        #expect(payload.lastAssistantMessage == nil)
+        #expect(payload.implicitStartSummary == "Claude Code completed a turn in worktree.")
+    }
+
+    @Test
+    func grokDecoderKeepsClaudeCompatAssistantReply() throws {
+        let payload = try JSONDecoder().decode(GrokHookPayload.self, from: try grokCompatStopJSON(answer: "The real Grok reply."))
+        #expect(payload.hookEventName == .stop)
+        #expect(payload.sessionID == "grok-compat")
+        #expect(payload.lastAssistantMessage == "The real Grok reply.")
+        #expect(payload.prompt == "refactor the parser")
+        #expect(payload.sessionTitle == "Grok · worktree")
+        #expect(payload.implicitSummary == "The real Grok reply.")
+        #expect(payload.defaultGrokMetadata.lastAssistantMessage == "The real Grok reply.")
+        #expect(payload.toolName == "run_terminal_command")
+    }
+
+    @Test
+    func claudeCompatInvocationRoutesToGrok() throws {
+        let payload = try grokCompatStopJSON(answer: "done")
+        #expect(GrokCompatRouting.payloadLooksLikeGrokEnvelope(payload))
+        #expect(
+            GrokCompatRouting.shouldRouteToGrok(
+                payload: payload,
+                environment: [:]
+            )
+        )
+
+        let claudePayload = """
+        {"hook_event_name":"Stop","session_id":"claude-1","cwd":"/tmp/worktree","last_assistant_message":"Claude reply."}
+        """.data(using: .utf8)!
+        #expect(!GrokCompatRouting.payloadLooksLikeGrokEnvelope(claudePayload))
+        #expect(
+            GrokCompatRouting.shouldRouteToGrok(
+                payload: claudePayload,
+                environment: ["GROK_SESSION_ID": "grok-session", "GROK_HOOK_EVENT": "stop"]
+            )
+        )
+        #expect(
+            !GrokCompatRouting.shouldRouteToGrok(
+                payload: claudePayload,
+                environment: ["CLAUDE_PROJECT_DIR": "/tmp/worktree"]
+            )
+        )
+    }
+
+    @Test
+    func claudeCompatStopShowsGrokReplyInsteadOfClaudeCompletion() async throws {
+        let socketURL = BridgeSocketLocation.uniqueTestURL()
+        let server = BridgeServer(socketURL: socketURL)
+        try server.start()
+        defer { server.stop() }
+
+        let answer = String(repeating: "Grok answer. ", count: 19) + "Grok answer."
+        _ = try BridgeCommandClient(socketURL: socketURL).send(
+            .processClaudeHook(
+                ClaudeHookPayload(
+                    cwd: "/tmp/worktree",
+                    hookEventName: .sessionStart,
+                    sessionID: "grok-compat",
+                    source: .startup
+                )
+            )
+        )
+        let promptPayload = try JSONDecoder().decode(
+            GrokHookPayload.self,
+            from: grokCompatPromptJSON()
+        )
+        let stopPayload = try JSONDecoder().decode(
+            GrokHookPayload.self,
+            from: try grokCompatStopJSON(answer: answer)
+        )
+        _ = try BridgeCommandClient(socketURL: socketURL).send(.processGrokHook(promptPayload))
+        _ = try BridgeCommandClient(socketURL: socketURL).send(.processGrokHook(stopPayload))
+
+        let session = try #require(server.sessionStateSnapshotForTests().session(id: "grok-compat"))
+        #expect(session.tool == .grokBuild)
+        #expect(session.title == "Grok · worktree")
+        #expect(session.phase == .completed)
+        #expect(session.latestUserPromptText == "refactor the parser")
+        #expect(session.completionAssistantMessageText == answer)
+        #expect(session.summary.hasPrefix("Grok answer."))
+        #expect(session.summary.contains("Claude") == false)
+        #expect(session.summary.count < answer.count)
+    }
 }
 
 // MARK: - Helpers
+
+private func grokCompatPromptJSON() -> Data {
+    """
+    {
+      "hookEventName": "user_prompt_submit",
+      "hook_event_name": "UserPromptSubmit",
+      "sessionId": "grok-compat",
+      "session_id": "grok-compat",
+      "cwd": "/tmp/worktree",
+      "prompt": "refactor the parser"
+    }
+    """.data(using: .utf8)!
+}
+
+private func grokCompatStopJSON(answer: String) throws -> Data {
+    let object: [String: Any] = [
+        "hookEventName": "stop",
+        "hook_event_name": "Stop",
+        "sessionId": "grok-compat",
+        "session_id": "grok-compat",
+        "cwd": "/tmp/worktree",
+        "prompt": "refactor the parser",
+        "reason": "end_turn",
+        "tool_name": "run_terminal_command",
+        "lastAssistantMessage": answer,
+    ]
+    return try JSONSerialization.data(withJSONObject: object)
+}
 
 private func nextMatchingGrokEvent(
     from iterator: inout AsyncThrowingStream<AgentEvent, Error>.AsyncIterator,

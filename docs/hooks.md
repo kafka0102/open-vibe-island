@@ -390,7 +390,9 @@ Managed status is **healthy only when every event above** is present with an Ope
 ### Wire format notes
 
 - Stdin JSON uses **camelCase** keys (`sessionId`, `hookEventName`, `toolName`, `toolResult`).
+- Grok also loads Claude Code hooks from `~/.claude/settings.json` and runs those commands unchanged (`--source claude`). The envelope still includes Claude's snake_case keys, but the assistant reply is only camelCase `lastAssistantMessage` — there is no `last_assistant_message`. Decoding that payload as Claude drops the reply and labels the turn "Claude Code completed a turn". Open Island routes the event to Grok when `GROK_SESSION_ID` or `GROK_HOOK_EVENT` is set, or when the JSON itself has Grok's camelCase identity. The island then shows Grok, the user prompt, and the assistant reply.
 - `hookEventName` may arrive as PascalCase (`PreToolUse`), snake_case (`pre_tool_use`) or camelCase (`preToolUse`); all are accepted.
+- Snake_case Claude aliases (`session_id`, `hook_event_name`, `tool_name`, `tool_response`) are accepted on the Grok decode path so a compat envelope does not have to be rewritten.
 - Envelopes may carry `promptId`; it is decoded as `promptID` but not acted on yet (reserved for ignoring stale-prompt reports).
 - `StopCancelled` carries `reason` (`user_interrupt`, `permission_rejected`, `permission_cancelled`, `max_turns`, `no_progress`, `unknown`), `cancelledBy` (`user` / `runtime` / `unknown`) and optional `cancelTrigger` / `reasonDetails` / `lastAssistantMessage`.
 - PreToolUse decision format (not used by the managed install yet): `{"decision":"allow"}` / `{"decision":"deny","reason":"..."}`.

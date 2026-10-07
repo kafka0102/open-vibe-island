@@ -392,6 +392,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var openCodeMetadata: OpenCodeSessionMetadata?
     public var cursorMetadata: CursorSessionMetadata?
     public var piMetadata: PiSessionMetadata?
+    public var grokMetadata: GrokSessionMetadata?
 
     /// Whether this session originates from a remote (SSH) connection.
     public var isRemote: Bool = false
@@ -447,7 +448,8 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         geminiMetadata: GeminiSessionMetadata? = nil,
         openCodeMetadata: OpenCodeSessionMetadata? = nil,
         cursorMetadata: CursorSessionMetadata? = nil,
-        piMetadata: PiSessionMetadata? = nil
+        piMetadata: PiSessionMetadata? = nil,
+        grokMetadata: GrokSessionMetadata? = nil
     ) {
         self.id = id
         self.title = title
@@ -467,6 +469,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         self.openCodeMetadata = openCodeMetadata
         self.cursorMetadata = cursorMetadata
         self.piMetadata = piMetadata
+        self.grokMetadata = grokMetadata
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -488,6 +491,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         case openCodeMetadata
         case cursorMetadata
         case piMetadata
+        case grokMetadata
     }
 
     public init(from decoder: any Decoder) throws {
@@ -510,6 +514,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         openCodeMetadata = try container.decodeIfPresent(OpenCodeSessionMetadata.self, forKey: .openCodeMetadata)
         cursorMetadata = try container.decodeIfPresent(CursorSessionMetadata.self, forKey: .cursorMetadata)
         piMetadata = try container.decodeIfPresent(PiSessionMetadata.self, forKey: .piMetadata)
+        grokMetadata = try container.decodeIfPresent(GrokSessionMetadata.self, forKey: .grokMetadata)
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -532,6 +537,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         try container.encodeIfPresent(openCodeMetadata, forKey: .openCodeMetadata)
         try container.encodeIfPresent(cursorMetadata, forKey: .cursorMetadata)
         try container.encodeIfPresent(piMetadata, forKey: .piMetadata)
+        try container.encodeIfPresent(grokMetadata, forKey: .grokMetadata)
     }
 }
 
@@ -574,11 +580,11 @@ public extension AgentSession {
     }
 
     var currentToolName: String? {
-        codexMetadata?.currentTool ?? claudeMetadata?.currentTool ?? openCodeMetadata?.currentTool ?? cursorMetadata?.currentTool ?? piMetadata?.currentTool
+        grokMetadata?.currentTool ?? codexMetadata?.currentTool ?? claudeMetadata?.currentTool ?? openCodeMetadata?.currentTool ?? cursorMetadata?.currentTool ?? piMetadata?.currentTool
     }
 
     var lastAssistantMessageText: String? {
-        codexMetadata?.lastAssistantMessage ?? claudeMetadata?.lastAssistantMessage ?? geminiMetadata?.lastAssistantMessage ?? openCodeMetadata?.lastAssistantMessage ?? cursorMetadata?.lastAssistantMessage ?? piMetadata?.lastAssistantMessage
+        grokMetadata?.lastAssistantMessage ?? codexMetadata?.lastAssistantMessage ?? claudeMetadata?.lastAssistantMessage ?? geminiMetadata?.lastAssistantMessage ?? openCodeMetadata?.lastAssistantMessage ?? cursorMetadata?.lastAssistantMessage ?? piMetadata?.lastAssistantMessage
     }
 
     var completionAssistantMessageText: String? {
@@ -600,15 +606,15 @@ public extension AgentSession {
     }
 
     var latestUserPromptText: String? {
-        codexMetadata?.lastUserPrompt ?? claudeMetadata?.lastUserPrompt ?? geminiMetadata?.lastUserPrompt ?? openCodeMetadata?.lastUserPrompt ?? cursorMetadata?.lastUserPrompt ?? piMetadata?.lastUserPrompt
+        grokMetadata?.lastUserPrompt ?? codexMetadata?.lastUserPrompt ?? claudeMetadata?.lastUserPrompt ?? geminiMetadata?.lastUserPrompt ?? openCodeMetadata?.lastUserPrompt ?? cursorMetadata?.lastUserPrompt ?? piMetadata?.lastUserPrompt
     }
 
     var initialUserPromptText: String? {
-        codexMetadata?.initialUserPrompt ?? claudeMetadata?.initialUserPrompt ?? geminiMetadata?.initialUserPrompt ?? openCodeMetadata?.initialUserPrompt ?? cursorMetadata?.initialUserPrompt ?? piMetadata?.initialUserPrompt
+        grokMetadata?.initialUserPrompt ?? codexMetadata?.initialUserPrompt ?? claudeMetadata?.initialUserPrompt ?? geminiMetadata?.initialUserPrompt ?? openCodeMetadata?.initialUserPrompt ?? cursorMetadata?.initialUserPrompt ?? piMetadata?.initialUserPrompt
     }
 
     var currentCommandPreviewText: String? {
-        codexMetadata?.currentCommandPreview ?? claudeMetadata?.currentToolInputPreview ?? openCodeMetadata?.currentToolInputPreview ?? cursorMetadata?.currentToolInputPreview ?? piMetadata?.currentToolInputPreview
+        grokMetadata?.currentToolInputPreview ?? codexMetadata?.currentCommandPreview ?? claudeMetadata?.currentToolInputPreview ?? openCodeMetadata?.currentToolInputPreview ?? cursorMetadata?.currentToolInputPreview ?? piMetadata?.currentToolInputPreview
     }
 }
 

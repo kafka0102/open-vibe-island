@@ -73,7 +73,8 @@ public struct SessionState: Equatable, Sendable {
                 geminiMetadata: payload.geminiMetadata?.isEmpty == true ? nil : payload.geminiMetadata,
                 openCodeMetadata: payload.openCodeMetadata?.isEmpty == true ? nil : payload.openCodeMetadata,
                 cursorMetadata: payload.cursorMetadata?.isEmpty == true ? nil : payload.cursorMetadata,
-                piMetadata: payload.piMetadata?.isEmpty == true ? nil : payload.piMetadata
+                piMetadata: payload.piMetadata?.isEmpty == true ? nil : payload.piMetadata,
+                grokMetadata: payload.grokMetadata?.isEmpty == true ? nil : payload.grokMetadata
             )
             session.isRemote = payload.isRemote
             session.isHookManaged = payload.origin == .live
@@ -217,6 +218,18 @@ public struct SessionState: Equatable, Sendable {
             }
 
             session.piMetadata = payload.piMetadata.isEmpty ? nil : payload.piMetadata
+            session.updatedAt = payload.timestamp
+            upsert(session)
+
+        case let .grokSessionMetadataUpdated(payload):
+            guard var session = sessionsByID[payload.sessionID] else {
+                return
+            }
+
+            if !payload.grokMetadata.isEmpty {
+                session.grokMetadata = payload.grokMetadata
+            }
+            Self.adoptGrokIdentity(on: &session)
             session.updatedAt = payload.timestamp
             upsert(session)
 
@@ -535,5 +548,30 @@ public struct SessionState: Equatable, Sendable {
 
     private mutating func upsert(_ session: AgentSession) {
         sessionsByID[session.id] = session
+    }
+
+    /// Grok can be mislabeled as Claude when it runs Claude-compat hooks.
+    /// A later Grok event adopts the row without resetting phase or summary.
+    private static func adoptGrokIdentity(on session: inout AgentSession) {
+        guard session.tool != .grokBuild else { return }
+        session.tool = .grokBuild
+        session.title = grokTitle(for: session)
+    }
+
+    private static func grokTitle(for session: AgentSession) -> String {
+        if session.title.hasPrefix("Grok ·") {
+            return session.title
+        }
+        if let workspace = session.jumpTarget?.workspaceName.trimmingCharacters(in: .whitespacesAndNewlines),
+           !workspace.isEmpty {
+            return "Grok · \(workspace)"
+        }
+        let pieces = session.title.split(separator: "·", maxSplits: 1).map {
+            String($0).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if pieces.count == 2, !pieces[1].isEmpty {
+            return "Grok · \(pieces[1])"
+        }
+        return "Grok"
     }
 }

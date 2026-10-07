@@ -25,12 +25,16 @@ public enum GrokHookEventName: String, Codable, Sendable, CaseIterable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw = try container.decode(String.self)
-        if let exact = GrokHookEventName(rawValue: raw) {
+        try self.init(rawName: raw)
+    }
+
+    init(rawName: String) throws {
+        if let exact = Self(rawValue: rawName) {
             self = exact
             return
         }
 
-        let normalized = raw
+        let normalized = rawName
             .replacingOccurrences(of: "_", with: "")
             .lowercased()
 
@@ -51,9 +55,8 @@ public enum GrokHookEventName: String, Codable, Sendable, CaseIterable {
         case "postcompact": self = .postCompact
         case "permissiondenied": self = .permissionDenied
         default:
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Unknown Grok hook event name: \(raw)"
+            throw DecodingError.dataCorrupted(
+                .init(codingPath: [], debugDescription: "Unknown Grok hook event name: \(rawName)")
             )
         }
     }
@@ -187,38 +190,78 @@ public struct GrokHookPayload: Equatable, Codable, Sendable {
     }
 
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        hookEventName = try container.decode(GrokHookEventName.self, forKey: .hookEventName)
-        sessionID = try container.decode(String.self, forKey: .sessionID)
-        cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
-            ?? container.decodeIfPresent(String.self, forKey: .workspaceRoot)
-            ?? ""
-        workspaceRoot = try container.decodeIfPresent(String.self, forKey: .workspaceRoot)
-        permissionMode = try container.decodeIfPresent(String.self, forKey: .permissionMode)
-        timestamp = try container.decodeIfPresent(String.self, forKey: .timestamp)
-        promptID = try container.decodeIfPresent(String.self, forKey: .promptID)
-        toolName = try container.decodeIfPresent(String.self, forKey: .toolName)
-        toolInput = try container.decodeIfPresent(CodexHookJSONValue.self, forKey: .toolInput)
-        toolUseID = try container.decodeIfPresent(String.self, forKey: .toolUseID)
-        toolResult = try container.decodeIfPresent(CodexHookJSONValue.self, forKey: .toolResult)
-        prompt = try container.decodeIfPresent(String.self, forKey: .prompt)
-        lastAssistantMessage = try container.decodeIfPresent(String.self, forKey: .lastAssistantMessage)
-        stopHookActive = try container.decodeIfPresent(Bool.self, forKey: .stopHookActive)
-        reason = try container.decodeIfPresent(String.self, forKey: .reason)
-        cancelledBy = try container.decodeIfPresent(String.self, forKey: .cancelledBy)
-        cancelTrigger = try container.decodeIfPresent(String.self, forKey: .cancelTrigger)
-        reasonDetails = try container.decodeIfPresent(String.self, forKey: .reasonDetails)
-        source = try container.decodeIfPresent(String.self, forKey: .source)
-        message = try container.decodeIfPresent(String.self, forKey: .message)
-        notificationType = try container.decodeIfPresent(String.self, forKey: .notificationType)
-        error = try container.decodeIfPresent(String.self, forKey: .error)
-        errorDetails = try container.decodeIfPresent(String.self, forKey: .errorDetails)
-        agentType = try container.decodeIfPresent(String.self, forKey: .agentType)
-        agentID = try container.decodeIfPresent(String.self, forKey: .agentID)
-        terminalApp = try container.decodeIfPresent(String.self, forKey: .terminalApp)
-        terminalSessionID = try container.decodeIfPresent(String.self, forKey: .terminalSessionID)
-        terminalTTY = try container.decodeIfPresent(String.self, forKey: .terminalTTY)
-        terminalTitle = try container.decodeIfPresent(String.self, forKey: .terminalTitle)
+        let container = try decoder.container(keyedBy: GrokHookJSONKey.self)
+        guard let eventName = try container.firstString("hookEventName", "hook_event_name") else {
+            throw DecodingError.dataCorrupted(
+                .init(codingPath: decoder.codingPath, debugDescription: "Missing Grok hookEventName")
+            )
+        }
+        hookEventName = try GrokHookEventName(rawName: eventName)
+        guard let sessionID = try container.firstString("sessionId", "session_id") else {
+            throw DecodingError.dataCorrupted(
+                .init(codingPath: decoder.codingPath, debugDescription: "Missing Grok sessionId")
+            )
+        }
+        self.sessionID = sessionID
+        let decodedCWD = try container.firstString("cwd")
+        let decodedWorkspace = try container.firstString("workspaceRoot", "workspace_root")
+        cwd = decodedCWD ?? decodedWorkspace ?? ""
+        workspaceRoot = decodedWorkspace
+        permissionMode = try container.firstString("permissionMode", "permission_mode")
+        timestamp = try container.firstString("timestamp")
+        promptID = try container.firstString("promptId", "prompt_id")
+        toolName = try container.firstString("toolName", "tool_name")
+        toolInput = try container.firstJSON("toolInput", "tool_input")
+        toolUseID = try container.firstString("toolUseId", "tool_use_id")
+        toolResult = try container.firstJSON("toolResult", "tool_response", "toolResponse")
+        prompt = try container.firstString("prompt")
+        lastAssistantMessage = try container.firstString("lastAssistantMessage", "last_assistant_message")
+        stopHookActive = try container.firstBool("stopHookActive", "stop_hook_active")
+        reason = try container.firstString("reason")
+        cancelledBy = try container.firstString("cancelledBy", "cancelled_by")
+        cancelTrigger = try container.firstString("cancelTrigger", "cancel_trigger")
+        reasonDetails = try container.firstString("reasonDetails", "reason_details")
+        source = try container.firstString("source")
+        message = try container.firstString("message")
+        notificationType = try container.firstString("notificationType", "notification_type")
+        error = try container.firstString("error")
+        errorDetails = try container.firstString("errorDetails", "error_details")
+        agentType = try container.firstString("agentType", "agent_type", "subagentType", "subagent_type")
+        agentID = try container.firstString("agentId", "agent_id", "subagentId", "subagent_id")
+        terminalApp = try container.firstString("terminalApp", "terminal_app")
+        terminalSessionID = try container.firstString("terminalSessionID", "terminalSessionId", "terminal_session_id")
+        terminalTTY = try container.firstString("terminalTTY", "terminalTty", "terminal_tty")
+        terminalTitle = try container.firstString("terminalTitle", "terminal_title")
+    }
+}
+
+public struct GrokSessionMetadata: Equatable, Codable, Sendable {
+    public var initialUserPrompt: String?
+    public var lastUserPrompt: String?
+    public var lastAssistantMessage: String?
+    public var currentTool: String?
+    public var currentToolInputPreview: String?
+
+    public init(
+        initialUserPrompt: String? = nil,
+        lastUserPrompt: String? = nil,
+        lastAssistantMessage: String? = nil,
+        currentTool: String? = nil,
+        currentToolInputPreview: String? = nil
+    ) {
+        self.initialUserPrompt = initialUserPrompt
+        self.lastUserPrompt = lastUserPrompt
+        self.lastAssistantMessage = lastAssistantMessage
+        self.currentTool = currentTool
+        self.currentToolInputPreview = currentToolInputPreview
+    }
+
+    public var isEmpty: Bool {
+        initialUserPrompt == nil
+            && lastUserPrompt == nil
+            && lastAssistantMessage == nil
+            && currentTool == nil
+            && currentToolInputPreview == nil
     }
 }
 
@@ -294,6 +337,31 @@ public extension GrokHookPayload {
 
     var lastAssistantMessagePreview: String? {
         clipped(lastAssistantMessage)
+    }
+
+    /// Prompt and assistant text kept for the island card. Summaries stay short;
+    /// this retains the reply Grok puts only in camelCase `lastAssistantMessage`.
+    var defaultGrokMetadata: GrokSessionMetadata {
+        GrokSessionMetadata(
+            initialUserPrompt: preservedBody(prompt, limit: 4_000),
+            lastUserPrompt: preservedBody(prompt, limit: 4_000),
+            lastAssistantMessage: preservedBody(lastAssistantMessage, limit: 8_000),
+            currentTool: shouldClearCurrentTool ? nil : toolName,
+            currentToolInputPreview: shouldClearCurrentTool ? nil : toolInputPreview
+        )
+    }
+
+    /// Turn-settling events should drop the in-flight tool so the completion
+    /// card shows the reply instead of the last command.
+    var shouldClearCurrentTool: Bool {
+        switch hookEventName {
+        case .stop, .stopFailure, .stopCancelled, .sessionEnd:
+            return true
+        case .notification:
+            return isIdlePromptNotification
+        default:
+            return false
+        }
     }
 
     var notificationSummary: String {
@@ -462,6 +530,15 @@ public extension GrokHookPayload {
 
         let endIndex = collapsed.index(collapsed.startIndex, offsetBy: limit - 1)
         return "\(collapsed[..<endIndex])…"
+    }
+
+    private func preservedBody(_ value: String?, limit: Int) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        guard trimmed.count > limit else { return trimmed }
+        let endIndex = trimmed.index(trimmed.startIndex, offsetBy: limit - 1)
+        return "\(trimmed[..<endIndex])…"
     }
 
     private func stringValue(for value: CodexHookJSONValue?) -> String? {
@@ -669,5 +746,52 @@ public extension GrokHookPayload {
 private extension Array {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
+    }
+}
+
+private struct GrokHookJSONKey: CodingKey {
+    var stringValue: String
+    var intValue: Int?
+
+    init(_ string: String) {
+        stringValue = string
+    }
+
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+
+    init?(intValue: Int) {
+        nil
+    }
+}
+
+private extension KeyedDecodingContainer where K == GrokHookJSONKey {
+    func firstString(_ keys: String...) throws -> String? {
+        for key in keys {
+            if let value = try decodeIfPresent(String.self, forKey: GrokHookJSONKey(key)),
+               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return value
+            }
+        }
+        return nil
+    }
+
+    func firstBool(_ keys: String...) throws -> Bool? {
+        for key in keys {
+            if let value = try decodeIfPresent(Bool.self, forKey: GrokHookJSONKey(key)) {
+                return value
+            }
+        }
+        return nil
+    }
+
+    func firstJSON(_ keys: String...) throws -> CodexHookJSONValue? {
+        for key in keys {
+            if let value = try decodeIfPresent(CodexHookJSONValue.self, forKey: GrokHookJSONKey(key)) {
+                return value
+            }
+        }
+        return nil
     }
 }

@@ -286,7 +286,7 @@ AI coding 正在成为日常开发流程的一部分，但围绕它的控制层�
   swift run OpenIslandSetup uninstallKimi  # 移除受管条目，保留用户自定义的 [[hooks]]
   ```
 
-- **Grok Build** — 基于 hook 的集成，写入 `~/.grok/hooks/open-island.json`（xAI Grok CLI / TUI）。Grok 使用 camelCase 字段（`sessionId`、`hookEventName`、`toolResult`），事件名同时接受 PascalCase 与 snake_case。Open Island 通过独立的 `--source grok` 路径完成解码与会话生命周期映射（可见性、活动状态、turn 完成、终端跳回）。受管安装注册完整支持的生命周期事件集合；工具事件为观察模式（尚未实现 PreToolUse 拦截）。仅当所有必需事件均挂载 Open Island 命令时，Settings 才显示已安装（Vibe Island 的 hooks 不计入）。可在设置窗口安装，或通过 CLI：
+- **Grok Build** — 基于 hook 的集成，写入 `~/.grok/hooks/open-island.json`（xAI Grok CLI / TUI）。Grok 使用 camelCase 字段（`sessionId`、`hookEventName`、`toolResult`、`lastAssistantMessage`），事件名同时接受 PascalCase 与 snake_case。它还会直接执行 `~/.claude/settings.json` 里的 Claude Code hooks；Open Island 会把这种兼容事件识别为 Grok，并展示用户提示和助手回复，而不是笼统的 “Claude 已完成”。原生事件仍走 `--source grok` 做生命周期映射（可见性、活动状态、turn 完成、终端跳回）。受管安装注册完整支持的生命周期事件集合；工具事件为观察模式（尚未实现 PreToolUse 拦截）。仅当所有必需事件均挂载 Open Island 命令时，Settings 才显示已安装（Vibe Island 的 hooks 不计入）。可在设置窗口安装，或通过 CLI：
 
   ```sh
   swift run OpenIslandSetup installGrok    # 写入 ~/.grok/hooks/open-island.json

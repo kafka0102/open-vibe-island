@@ -1451,15 +1451,15 @@ public final class BridgeServer: @unchecked Sendable {
                         initialPhase: .completed,
                         summary: payload.implicitSummary,
                         timestamp: .now,
-                        jumpTarget: payload.defaultJumpTarget
+                        jumpTarget: payload.defaultJumpTarget,
+                        grokMetadata: payload.defaultGrokMetadata.isEmpty ? nil : payload.defaultGrokMetadata
                     )
                 )
             )
             send(.response(.acknowledged), to: clientID)
 
         case .userPromptSubmit:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -1473,8 +1473,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case .preToolUse:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -1493,8 +1492,7 @@ public final class BridgeServer: @unchecked Sendable {
         // model is told the tool was skipped and keeps working), so it must
         // not settle the turn on its own.
         case .postToolUse, .subagentStart, .subagentStop, .preCompact, .postCompact, .permissionDenied:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             let currentPhase = localState.session(id: payload.sessionID)?.phase ?? .running
             emit(
                 .activityUpdated(
@@ -1509,8 +1507,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case .notification:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             let currentPhase = localState.session(id: payload.sessionID)?.phase ?? .running
             if payload.isIdlePromptNotification {
                 // `idle_prompt` is Grok's backstop for turns that reported none
@@ -1542,8 +1539,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case .postToolUseFailure, .stopFailure:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -1557,8 +1553,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case .stop:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             // Ignore observe-only session-end Stop fires (reason != end_turn).
             if payload.isGenuineTurnStop {
                 emit(
@@ -1580,8 +1575,7 @@ public final class BridgeServer: @unchecked Sendable {
             // the user caused is flagged as an interrupt so the island does
             // not pop for something they just did; a runtime bail-out
             // (`cancelledBy == "runtime"`, e.g. max turns) is worth surfacing.
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             emit(
                 .sessionCompleted(
                     SessionCompleted(
@@ -1595,8 +1589,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case .sessionEnd:
-            ensureGrokSessionExists(for: payload)
-            synchronizeGrokJumpTarget(for: payload)
+            prepareGrokSession(for: payload)
             emit(
                 .sessionCompleted(
                     SessionCompleted(
@@ -1634,10 +1627,17 @@ public final class BridgeServer: @unchecked Sendable {
                     initialPhase: .completed,
                     summary: payload.implicitSummary,
                     timestamp: .now,
-                    jumpTarget: payload.defaultJumpTarget
+                    jumpTarget: payload.defaultJumpTarget,
+                    grokMetadata: payload.defaultGrokMetadata.isEmpty ? nil : payload.defaultGrokMetadata
                 )
             )
         )
+    }
+
+    private func prepareGrokSession(for payload: GrokHookPayload) {
+        ensureGrokSessionExists(for: payload)
+        synchronizeGrokJumpTarget(for: payload)
+        synchronizeGrokMetadata(for: payload)
     }
 
     private func synchronizeGrokJumpTarget(for payload: GrokHookPayload) {
@@ -1659,6 +1659,39 @@ public final class BridgeServer: @unchecked Sendable {
                 JumpTargetUpdated(
                     sessionID: payload.sessionID,
                     jumpTarget: jumpTarget,
+                    timestamp: .now
+                )
+            )
+        )
+    }
+
+    private func synchronizeGrokMetadata(for payload: GrokHookPayload) {
+        guard let existingSession = localState.session(id: payload.sessionID) else {
+            return
+        }
+
+        let update = payload.defaultGrokMetadata
+        let merged = GrokSessionMetadata(
+            initialUserPrompt: existingSession.grokMetadata?.initialUserPrompt ?? update.initialUserPrompt,
+            lastUserPrompt: update.lastUserPrompt ?? existingSession.grokMetadata?.lastUserPrompt,
+            lastAssistantMessage: update.lastAssistantMessage ?? existingSession.grokMetadata?.lastAssistantMessage,
+            currentTool: payload.shouldClearCurrentTool ? nil : (update.currentTool ?? existingSession.grokMetadata?.currentTool),
+            currentToolInputPreview: payload.shouldClearCurrentTool
+                ? nil
+                : (update.currentToolInputPreview ?? existingSession.grokMetadata?.currentToolInputPreview)
+        )
+        let storedMetadata = merged.isEmpty ? nil : merged
+        let metadataChanged = existingSession.grokMetadata != storedMetadata
+        let identityChanged = existingSession.tool != .grokBuild
+        guard metadataChanged || identityChanged else {
+            return
+        }
+
+        emit(
+            .grokSessionMetadataUpdated(
+                GrokSessionMetadataUpdated(
+                    sessionID: payload.sessionID,
+                    grokMetadata: merged,
                     timestamp: .now
                 )
             )

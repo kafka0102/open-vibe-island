@@ -1586,6 +1586,7 @@ final class AppModel {
                 case let .openCodeSessionMetadataUpdated(p): return p.sessionID
                 case let .cursorSessionMetadataUpdated(p): return p.sessionID
                 case let .piSessionMetadataUpdated(p): return p.sessionID
+                case let .grokSessionMetadataUpdated(p): return p.sessionID
                 case let .sessionHeartbeat(p): return p.sessionID
                 case let .actionableStateResolved(p): return p.sessionID
                 }
@@ -1879,6 +1880,11 @@ final class AppModel {
                 return "\(state.session(id: payload.sessionID)?.tool.displayName ?? "Pi") is running \(currentTool)."
             }
             return payload.piMetadata.lastAssistantMessage ?? "Pi session metadata updated."
+        case let .grokSessionMetadataUpdated(payload):
+            if let currentTool = payload.grokMetadata.currentTool {
+                return "Grok is running \(currentTool)."
+            }
+            return payload.grokMetadata.lastAssistantMessage ?? "Grok session metadata updated."
         case let .sessionHeartbeat(payload):
             return "Heartbeat received for session \(payload.sessionID)."
         case let .actionableStateResolved(payload):

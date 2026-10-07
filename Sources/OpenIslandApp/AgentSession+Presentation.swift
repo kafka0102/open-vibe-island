@@ -398,6 +398,8 @@ extension AgentSession {
             return "Input"
         case "web_search", "tool_search":
             return "Search"
+        case "grep", "Grep":
+            return "Search"
         case "image_generation", "view_image":
             return "Image"
         case "context_compaction":
@@ -408,6 +410,16 @@ extension AgentSession {
             return "Question"
         case "spawn_agent":
             return "Subagent"
+        case "spawn_subagent":
+            return "Subagent"
+        case "run_terminal_command":
+            return "Terminal"
+        case "search_replace":
+            return "Edit"
+        case "read_file", "Read":
+            return "Read"
+        case "list_dir":
+            return "List"
         default:
             return humanizedToolName(toolName)
         }

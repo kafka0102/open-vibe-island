@@ -44,7 +44,16 @@ struct OpenIslandHooksCLI {
             }
 
             let arguments = Array(CommandLine.arguments.dropFirst())
-            let source = hookSource(arguments: arguments)
+            let environment = ProcessInfo.processInfo.environment
+            let declaredSource = hookSource(arguments: arguments)
+            // Grok executes ~/.claude/settings.json hooks as-is (`--source claude`).
+            // Those envelopes still decode as Claude, but the reply lives in
+            // camelCase `lastAssistantMessage`, so the island would say Claude
+            // completed and hide the actual Grok output.
+            let source: HookSource = declaredSource.isClaudeFormat
+                && GrokCompatRouting.shouldRouteToGrok(payload: input, environment: environment)
+                ? .grok
+                : declaredSource
             let sourceString = rawSourceString(arguments: arguments)
             let decoder = JSONDecoder()
             let client = BridgeCommandClient(socketURL: BridgeSocketLocation.currentURL())
@@ -111,7 +120,7 @@ struct OpenIslandHooksCLI {
             case .grok:
                 let payload = try decoder
                     .decode(GrokHookPayload.self, from: input)
-                    .withRuntimeContext(environment: ProcessInfo.processInfo.environment)
+                    .withRuntimeContext(environment: environment)
 
                 // Client timeout slightly under managed hook timeout (45s) so
                 // the hook can exit fail-open before Grok kills it.
