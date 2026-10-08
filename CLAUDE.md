@@ -83,3 +83,17 @@ The project is past MVP and welcomes new ideas and creative directions, but the 
 - `Sources/OpenIslandCore/{Claude,Codex,Gemini,Kimi,Cursor}Hooks.swift` etc. — per-agent hook payload models
 - `Sources/OpenIslandHooks/main.swift` — hook CLI entry
 - `docs/product.md`, `docs/architecture.md`, `AGENTS.md` — design / working-agreement docs
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five default triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
