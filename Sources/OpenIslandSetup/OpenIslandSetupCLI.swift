@@ -175,6 +175,7 @@ private struct SetupCommand {
         print("Codex dir: \(status.codexDirectory.path)")
         print("Feature flag enabled: \(status.featureFlagEnabled ? "yes" : "no")")
         print("Managed hooks present: \(status.managedHooksPresent ? "yes" : "no")")
+        print("Managed command stale: \(status.managedCommandIsStale ? "yes" : "no")")
         if let hooksBinary {
             print("Hooks binary: \(hooksBinary.path)")
         }
@@ -219,6 +220,7 @@ private struct SetupCommand {
 
         print("Claude dir: \(status.claudeDirectory.path)")
         print("Managed hooks present: \(status.managedHooksPresent ? "yes" : "no")")
+        print("Managed command stale: \(status.managedCommandIsStale ? "yes" : "no")")
         print("claude-island hooks present: \(status.hasClaudeIslandHooks ? "yes" : "no")")
         if let hooksBinary {
             print("Hooks binary: \(hooksBinary.path)")
@@ -261,6 +263,7 @@ private struct SetupCommand {
 
         print("Kimi dir: \(status.kimiDirectory.path)")
         print("Managed hooks present: \(status.managedHooksPresent ? "yes" : "no")")
+        print("Managed command stale: \(status.managedCommandIsStale ? "yes" : "no")")
         if let hooksBinary {
             print("Hooks binary: \(hooksBinary.path)")
         }
@@ -304,6 +307,7 @@ private struct SetupCommand {
         print("Grok dir: \(status.grokDirectory.path)")
         print("Hooks file: \(status.hooksURL.path)")
         print("Managed hooks present: \(status.managedHooksPresent ? "yes" : "no")")
+        print("Managed command stale: \(status.managedCommandIsStale ? "yes" : "no")")
         if let hooksBinary {
             print("Hooks binary: \(hooksBinary.path)")
         }

@@ -6,6 +6,9 @@ public struct KimiHookInstallationStatus: Equatable, Sendable, Codable {
     public var manifestURL: URL
     public var hooksBinaryURL: URL?
     public var managedHooksPresent: Bool
+    /// Managed hooks are present, but the recorded command does not invoke
+    /// the current managed binary. Does not change `managedHooksPresent`.
+    public var managedCommandIsStale: Bool
     public var manifest: KimiHookInstallerManifest?
 
     public init(
@@ -14,6 +17,7 @@ public struct KimiHookInstallationStatus: Equatable, Sendable, Codable {
         manifestURL: URL,
         hooksBinaryURL: URL?,
         managedHooksPresent: Bool,
+        managedCommandIsStale: Bool = false,
         manifest: KimiHookInstallerManifest?
     ) {
         self.kimiDirectory = kimiDirectory
@@ -21,6 +25,7 @@ public struct KimiHookInstallationStatus: Equatable, Sendable, Codable {
         self.manifestURL = manifestURL
         self.hooksBinaryURL = hooksBinaryURL
         self.managedHooksPresent = managedHooksPresent
+        self.managedCommandIsStale = managedCommandIsStale
         self.manifest = manifest
     }
 }
@@ -62,6 +67,8 @@ public final class KimiHookInstallationManager: @unchecked Sendable {
             manifestURL: manifestURL,
             hooksBinaryURL: resolvedBinaryURL,
             managedHooksPresent: managedPresent,
+            managedCommandIsStale: managedPresent
+                && !ManagedHooksBinary.commandUsesCurrentBinary(managedCommand, managedBinaryURL: managedHooksBinaryURL),
             manifest: manifest
         )
     }

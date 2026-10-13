@@ -16,7 +16,8 @@ public struct HookHealthReport: Equatable, Sendable, Identifiable {
         case binaryNotExecutable(path: String)
         /// The config file (settings.json / hooks.json) contains invalid JSON.
         case configMalformedJSON(path: String)
-        /// The command path recorded in the config doesn't point to an existing binary.
+        /// The command path recorded in the config doesn't point to an existing binary,
+        /// or it exists but is not the current managed hooks binary.
         case staleCommandPath(recorded: String, configPath: String)
         /// Other hooks detected alongside Open Island hooks (informational).
         case otherHooksDetected(names: [String])
@@ -34,7 +35,7 @@ public struct HookHealthReport: Equatable, Sendable, Identifiable {
             case .configMalformedJSON(let path):
                 "Config file is not valid JSON: \(path)"
             case .staleCommandPath(let recorded, let configPath):
-                "Command path in \(configPath) points to missing binary: \(recorded)"
+                "Command path in \(configPath) is missing or is not the current managed hooks binary: \(recorded)"
             case .otherHooksDetected(let names):
                 "Other hooks coexist: \(names.joined(separator: ", "))"
             case .manifestMissing(let expectedPath):
@@ -155,6 +156,7 @@ public enum HookHealthCheck {
                     // Check command paths in hooks
                     let staleCommands = findStaleCommandPaths(
                         in: data,
+                        currentBinaryURL: managedHooksBinaryURL,
                         fileManager: fileManager
                     )
                     for cmd in staleCommands {
@@ -223,7 +225,11 @@ public enum HookHealthCheck {
                 if (try? JSONSerialization.jsonObject(with: data)) == nil {
                     issues.append(.configMalformedJSON(path: hooksPath))
                 } else {
-                    let staleCommands = findStaleCommandPaths(in: data, fileManager: fileManager)
+                    let staleCommands = findStaleCommandPaths(
+                        in: data,
+                        currentBinaryURL: managedHooksBinaryURL,
+                        fileManager: fileManager
+                    )
                     for cmd in staleCommands {
                         issues.append(.staleCommandPath(recorded: cmd, configPath: hooksPath))
                     }
@@ -306,6 +312,7 @@ public enum HookHealthCheck {
     /// Extracts command paths from hooks JSON and checks if they point to existing files.
     private static func findStaleCommandPaths(
         in data: Data,
+        currentBinaryURL: URL,
         fileManager: FileManager
     ) -> [String] {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -330,12 +337,17 @@ public enum HookHealthCheck {
                         continue
                     }
 
-                    // Extract the actual binary path from the shell-quoted command
+                    // Extract the actual binary path from the shell-quoted command.
+                    // Missing files and files that are not the current managed
+                    // binary are both stale — an old install directory still
+                    // on disk must be refreshed.
                     let binaryPath = extractBinaryPath(from: command)
                     guard !seenCommands.contains(binaryPath) else { continue }
                     seenCommands.insert(binaryPath)
 
-                    if !fileManager.fileExists(atPath: binaryPath) {
+                    let pointsAtCurrentBinary = URL(fileURLWithPath: binaryPath).standardizedFileURL.path
+                        == currentBinaryURL.standardizedFileURL.path
+                    if !fileManager.fileExists(atPath: binaryPath) || !pointsAtCurrentBinary {
                         staleCommands.append(binaryPath)
                     }
                 }

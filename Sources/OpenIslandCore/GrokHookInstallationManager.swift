@@ -7,6 +7,9 @@ public struct GrokHookInstallationStatus: Equatable, Sendable {
     public var manifestURL: URL
     public var hooksBinaryURL: URL?
     public var managedHooksPresent: Bool
+    /// Managed hooks are present, but the recorded command does not invoke
+    /// the current managed binary. Does not change `managedHooksPresent`.
+    public var managedCommandIsStale: Bool
     public var manifest: GrokHookInstallerManifest?
 
     public init(
@@ -16,6 +19,7 @@ public struct GrokHookInstallationStatus: Equatable, Sendable {
         manifestURL: URL,
         hooksBinaryURL: URL?,
         managedHooksPresent: Bool,
+        managedCommandIsStale: Bool = false,
         manifest: GrokHookInstallerManifest?
     ) {
         self.grokDirectory = grokDirectory
@@ -24,6 +28,7 @@ public struct GrokHookInstallationStatus: Equatable, Sendable {
         self.manifestURL = manifestURL
         self.hooksBinaryURL = hooksBinaryURL
         self.managedHooksPresent = managedHooksPresent
+        self.managedCommandIsStale = managedCommandIsStale
         self.manifest = manifest
     }
 }
@@ -62,6 +67,10 @@ public final class GrokHookInstallationManager: @unchecked Sendable {
         let manifest = loadManifest(at: manifestURL)
         let managedCommand = manifest?.hookCommand
             ?? resolvedBinaryURL.map { GrokHookInstaller.hookCommand(for: $0.path) }
+        let managedHooksPresent = GrokHookInstaller.managedHooksPresent(
+            in: hooksData,
+            managedCommand: managedCommand
+        )
 
         return GrokHookInstallationStatus(
             grokDirectory: grokDirectory,
@@ -69,10 +78,9 @@ public final class GrokHookInstallationManager: @unchecked Sendable {
             hooksURL: hooksURL,
             manifestURL: manifestURL,
             hooksBinaryURL: resolvedBinaryURL,
-            managedHooksPresent: GrokHookInstaller.managedHooksPresent(
-                in: hooksData,
-                managedCommand: managedCommand
-            ),
+            managedHooksPresent: managedHooksPresent,
+            managedCommandIsStale: managedHooksPresent
+                && !ManagedHooksBinary.commandUsesCurrentBinary(managedCommand, managedBinaryURL: managedHooksBinaryURL),
             manifest: manifest
         )
     }

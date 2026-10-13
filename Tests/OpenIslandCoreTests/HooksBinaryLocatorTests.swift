@@ -58,6 +58,17 @@ struct HooksBinaryLocatorTests {
 
         #expect(locatedURL?.path == helperBinaryURL.standardizedFileURL.path)
     }
+
+    @Test
+    func commandUsesCurrentBinaryIgnoresOlderInstallDirectory() {
+        let current = URL(fileURLWithPath: "/Users/me/Library/Application Support/OpenIsland2/bin/OpenIslandHooks")
+        let currentCommand = "'/Users/me/Library/Application Support/OpenIsland2/bin/OpenIslandHooks' --source claude"
+        let legacyCommand = "'/Users/me/Library/Application Support/OpenIsland/bin/OpenIslandHooks' --source claude"
+
+        #expect(ManagedHooksBinary.commandUsesCurrentBinary(currentCommand, managedBinaryURL: current))
+        #expect(!ManagedHooksBinary.commandUsesCurrentBinary(legacyCommand, managedBinaryURL: current))
+        #expect(!ManagedHooksBinary.commandUsesCurrentBinary(nil, managedBinaryURL: current))
+    }
 }
 
 private func temporaryRootURL(named name: String) -> URL {
