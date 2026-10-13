@@ -71,7 +71,83 @@ struct ClaudeHooksTests {
 
         let uninstalled = try manager.uninstall()
         #expect(!uninstalled.managedHooksPresent)
+        #expect(!uninstalled.managedCommandIsStale)
         #expect(!FileManager.default.fileExists(atPath: uninstalled.manifestURL.path))
+    }
+
+    @Test
+    func staleLegacyCommandIsDetectedThenRefreshedByInstall() throws {
+        let rootURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("open-island-claude-stale-\(UUID().uuidString)", isDirectory: true)
+        let claudeDirectory = rootURL.appendingPathComponent(".claude", isDirectory: true)
+        let currentBinaryURL = rootURL
+            .appendingPathComponent("OpenIsland2", isDirectory: true)
+            .appendingPathComponent("bin", isDirectory: true)
+            .appendingPathComponent("OpenIslandHooks")
+        let legacyBinaryURL = rootURL
+            .appendingPathComponent("OpenIsland", isDirectory: true)
+            .appendingPathComponent("bin", isDirectory: true)
+            .appendingPathComponent("OpenIslandHooks")
+        let sourceBinaryURL = rootURL.appendingPathComponent("build").appendingPathComponent("OpenIslandHooks")
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: claudeDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: legacyBinaryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("legacy-hooks".utf8).write(to: legacyBinaryURL)
+        try FileManager.default.createDirectory(at: sourceBinaryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("current-hooks".utf8).write(to: sourceBinaryURL)
+
+        let legacyCommand = ClaudeHookInstaller.hookCommand(for: legacyBinaryURL.path)
+        let settings: [String: Any] = [
+            "hooks": [
+                "SessionStart": [[
+                    "hooks": [["type": "command", "command": legacyCommand]],
+                ]],
+                "UserPromptSubmit": [[
+                    "hooks": [["type": "command", "command": "echo keep-me"]],
+                ]],
+            ],
+        ]
+        let settingsURL = claudeDirectory.appendingPathComponent("settings.json")
+        try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted]).write(to: settingsURL)
+        let manifest = """
+        {"hookCommand":\(String(data: try JSONEncoder().encode(legacyCommand), encoding: .utf8)!),"installedAt":"2026-07-08T00:00:00Z"}
+        """
+        try manifest.write(
+            to: claudeDirectory.appendingPathComponent(ClaudeHookInstallerManifest.fileName),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let manager = ClaudeHookInstallationManager(
+            claudeDirectory: claudeDirectory,
+            managedHooksBinaryURL: currentBinaryURL
+        )
+
+        let stale = try manager.status()
+        #expect(stale.managedHooksPresent)
+        #expect(stale.managedCommandIsStale)
+
+        let refreshed = try manager.install(hooksBinaryURL: sourceBinaryURL)
+        #expect(refreshed.managedHooksPresent)
+        #expect(!refreshed.managedCommandIsStale)
+        #expect(refreshed.manifest?.hookCommand == ClaudeHookInstaller.hookCommand(for: currentBinaryURL.path))
+        #expect(try Data(contentsOf: currentBinaryURL) == Data("current-hooks".utf8))
+
+        let refreshedObject = try jsonObject(from: Data(contentsOf: settingsURL))
+        let refreshedHooks = refreshedObject["hooks"] as? [String: Any]
+        let sessionStart = ((refreshedHooks?["SessionStart"] as? [Any])?.first as? [String: Any])?["hooks"] as? [[String: Any]]
+        #expect(sessionStart?.first?["command"] as? String == ClaudeHookInstaller.hookCommand(for: currentBinaryURL.path))
+        let userPrompt = refreshedHooks?["UserPromptSubmit"] as? [[String: Any]]
+        let userCommands = userPrompt?.compactMap { ($0["hooks"] as? [[String: Any]])?.first?["command"] as? String }
+        #expect(userCommands?.contains("echo keep-me") == true)
+        #expect(userCommands?.contains { $0.contains(legacyBinaryURL.path) } == false)
+
+        let uninstalled = try manager.uninstall()
+        #expect(!uninstalled.managedHooksPresent)
+        let remaining = try String(contentsOf: settingsURL, encoding: .utf8)
+        #expect(remaining.contains("echo keep-me"))
+        #expect(!remaining.contains("OpenIslandHooks"))
     }
 
     @Test

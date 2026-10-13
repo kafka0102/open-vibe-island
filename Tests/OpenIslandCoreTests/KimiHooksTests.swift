@@ -300,6 +300,73 @@ struct KimiHooksTests {
     }
 
     @Test
+    func staleLegacyKimiCommandIsDetectedThenRefreshedByInstall() throws {
+        let rootURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("open-island-kimi-stale-\(UUID().uuidString)", isDirectory: true)
+        let kimiDirectory = rootURL.appendingPathComponent(".kimi", isDirectory: true)
+        let currentBinaryURL = rootURL.appendingPathComponent("OpenIsland2/bin/OpenIslandHooks")
+        let legacyBinaryURL = rootURL.appendingPathComponent("OpenIsland/bin/OpenIslandHooks")
+        let sourceBinaryURL = rootURL.appendingPathComponent("build/OpenIslandHooks")
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: kimiDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: sourceBinaryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("current-kimi".utf8).write(to: sourceBinaryURL)
+
+        let legacyCommand = KimiHookInstaller.hookCommand(for: legacyBinaryURL.path)
+        let config = """
+        default_model = "kimi-for-coding"
+
+        [[hooks]]
+        event = "Stop"
+        command = "echo keep-me"
+
+        \(KimiHookInstaller.markerComment)
+        [[hooks]]
+        event = "SessionStart"
+        matcher = "startup|resume"
+        command = \(tomlQuoted(legacyCommand))
+        timeout = 45
+
+        """
+        try config.write(to: kimiDirectory.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+        let manifest = """
+        {"hookCommand":\(String(data: try JSONEncoder().encode(legacyCommand), encoding: .utf8)!),"installedAt":"2026-07-08T00:00:00Z"}
+        """
+        try manifest.write(
+            to: kimiDirectory.appendingPathComponent(KimiHookInstallerManifest.fileName),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let manager = KimiHookInstallationManager(
+            kimiDirectory: kimiDirectory,
+            managedHooksBinaryURL: currentBinaryURL
+        )
+        let stale = try manager.status()
+        #expect(stale.managedHooksPresent)
+        #expect(stale.managedCommandIsStale)
+
+        let refreshed = try manager.install(hooksBinaryURL: sourceBinaryURL)
+        #expect(refreshed.managedHooksPresent)
+        #expect(!refreshed.managedCommandIsStale)
+        #expect(refreshed.manifest?.hookCommand == KimiHookInstaller.hookCommand(for: currentBinaryURL.path))
+
+        let rewritten = try String(contentsOf: refreshed.configURL, encoding: .utf8)
+        #expect(rewritten.contains(currentBinaryURL.path))
+        #expect(!rewritten.contains(legacyBinaryURL.path))
+        #expect(rewritten.contains("echo keep-me"))
+        #expect(rewritten.contains("default_model"))
+
+        let uninstalled = try manager.uninstall()
+        #expect(!uninstalled.managedHooksPresent)
+        let remaining = try String(contentsOf: refreshed.configURL, encoding: .utf8)
+        #expect(remaining.contains("echo keep-me"))
+        #expect(remaining.contains("default_model"))
+        #expect(!remaining.contains("OpenIslandHooks"))
+    }
+
+    @Test
     func resolvedAgentToolMapsKimiSource() {
         var payload = ClaudeHookPayload(
             cwd: "/tmp",

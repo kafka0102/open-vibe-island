@@ -6,6 +6,9 @@ public struct ClaudeHookInstallationStatus: Equatable, Sendable {
     public var manifestURL: URL
     public var hooksBinaryURL: URL?
     public var managedHooksPresent: Bool
+    /// Managed hooks are present, but the recorded command does not invoke
+    /// the current managed binary. Does not change `managedHooksPresent`.
+    public var managedCommandIsStale: Bool
     public var hasClaudeIslandHooks: Bool
     public var manifest: ClaudeHookInstallerManifest?
 
@@ -15,6 +18,7 @@ public struct ClaudeHookInstallationStatus: Equatable, Sendable {
         manifestURL: URL,
         hooksBinaryURL: URL?,
         managedHooksPresent: Bool,
+        managedCommandIsStale: Bool = false,
         hasClaudeIslandHooks: Bool,
         manifest: ClaudeHookInstallerManifest?
     ) {
@@ -23,6 +27,7 @@ public struct ClaudeHookInstallationStatus: Equatable, Sendable {
         self.manifestURL = manifestURL
         self.hooksBinaryURL = hooksBinaryURL
         self.managedHooksPresent = managedHooksPresent
+        self.managedCommandIsStale = managedCommandIsStale
         self.hasClaudeIslandHooks = hasClaudeIslandHooks
         self.manifest = manifest
     }
@@ -66,6 +71,8 @@ public final class ClaudeHookInstallationManager: @unchecked Sendable {
             manifestURL: manifestURL,
             hooksBinaryURL: resolvedHooksBinaryURL,
             managedHooksPresent: uninstallMutation.managedHooksPresent,
+            managedCommandIsStale: uninstallMutation.managedHooksPresent
+                && !ManagedHooksBinary.commandUsesCurrentBinary(managedCommand, managedBinaryURL: managedHooksBinaryURL),
             hasClaudeIslandHooks: uninstallMutation.hasClaudeIslandHooks,
             manifest: manifest
         )

@@ -8,6 +8,9 @@ public struct CodexHookInstallationStatus: Equatable, Sendable {
     public var hooksBinaryURL: URL?
     public var featureFlagEnabled: Bool
     public var managedHooksPresent: Bool
+    /// Managed hooks are present, but the recorded command does not invoke
+    /// the current managed binary. Does not change `managedHooksPresent`.
+    public var managedCommandIsStale: Bool
     public var manifest: CodexHookInstallerManifest?
 
     public init(
@@ -18,6 +21,7 @@ public struct CodexHookInstallationStatus: Equatable, Sendable {
         hooksBinaryURL: URL?,
         featureFlagEnabled: Bool,
         managedHooksPresent: Bool,
+        managedCommandIsStale: Bool = false,
         manifest: CodexHookInstallerManifest?
     ) {
         self.codexDirectory = codexDirectory
@@ -27,6 +31,7 @@ public struct CodexHookInstallationStatus: Equatable, Sendable {
         self.hooksBinaryURL = hooksBinaryURL
         self.featureFlagEnabled = featureFlagEnabled
         self.managedHooksPresent = managedHooksPresent
+        self.managedCommandIsStale = managedCommandIsStale
         self.manifest = manifest
     }
 }
@@ -72,6 +77,8 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
             hooksBinaryURL: resolvedHooksBinaryURL,
             featureFlagEnabled: CodexHookInstaller.isCodexHooksFeatureEnabled(in: configContents),
             managedHooksPresent: managedHooksPresent,
+            managedCommandIsStale: managedHooksPresent
+                && !ManagedHooksBinary.commandUsesCurrentBinary(managedCommand, managedBinaryURL: managedHooksBinaryURL),
             manifest: manifest
         )
     }

@@ -16,7 +16,44 @@ public enum ManagedHooksBinary {
             legacyInstallDirectory(fileManager: fileManager)
                 .appendingPathComponent(legacyBinaryName)
                 .standardizedFileURL,
+            // Pre-rebrand Open Island directory. Still a valid binary to *find*,
+            // but commands that point here are stale and must be refreshed.
+            previousInstallDirectory(fileManager: fileManager)
+                .appendingPathComponent(binaryName)
+                .standardizedFileURL,
         ]
+    }
+
+    /// True when `command` invokes the current managed hooks binary.
+    ///
+    /// A command that still points at a previous install directory (or any
+    /// other copy) is stale even when that file exists. Uninstall matching
+    /// stays separate and must keep recognizing those older commands.
+    public static func commandUsesCurrentBinary(_ command: String?, managedBinaryURL: URL) -> Bool {
+        guard let command else { return false }
+        guard let binaryPath = binaryPath(inHookCommand: command) else { return false }
+        return URL(fileURLWithPath: binaryPath).standardizedFileURL.path
+            == managedBinaryURL.standardizedFileURL.path
+    }
+
+    /// Shell-quoted or bare path that a hook command actually executes.
+    public static func binaryPath(inHookCommand command: String) -> String? {
+        let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if trimmed.hasPrefix("'") {
+            if let endQuote = trimmed.dropFirst().firstIndex(of: "'") {
+                return String(trimmed[trimmed.index(after: trimmed.startIndex)..<endQuote])
+            }
+        }
+
+        if trimmed.hasPrefix("\"") {
+            if let endQuote = trimmed.dropFirst().firstIndex(of: "\"") {
+                return String(trimmed[trimmed.index(after: trimmed.startIndex)..<endQuote])
+            }
+        }
+
+        return String(trimmed.prefix(while: { !$0.isWhitespace }))
     }
 
     @discardableResult
@@ -81,6 +118,15 @@ public enum ManagedHooksBinary {
             .appendingPathComponent("Library", isDirectory: true)
             .appendingPathComponent("Application Support", isDirectory: true)
             .appendingPathComponent("VibeIsland", isDirectory: true)
+            .appendingPathComponent("bin", isDirectory: true)
+    }
+
+    /// `OpenIsland` (no "2") — the directory used before the non-conflicting rebrand.
+    private static func previousInstallDirectory(fileManager: FileManager) -> URL {
+        fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library", isDirectory: true)
+            .appendingPathComponent("Application Support", isDirectory: true)
+            .appendingPathComponent("OpenIsland", isDirectory: true)
             .appendingPathComponent("bin", isDirectory: true)
     }
 }

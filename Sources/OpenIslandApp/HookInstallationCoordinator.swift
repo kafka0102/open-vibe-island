@@ -124,28 +124,39 @@ final class HookInstallationCoordinator {
 
     // MARK: - Computed display properties
 
+    // A stale managed command (old install directory, or any path other than
+    // the current managed binary) counts as not installed so Settings offers
+    // a refresh. Launch does not rewrite user config; `intent == .uninstalled`
+    // still never reinstalls.
+
     var codexHooksInstalled: Bool {
         codexHookStatus?.managedHooksPresent == true
+            && codexHookStatus?.managedCommandIsStale != true
     }
 
     var claudeHooksInstalled: Bool {
         claudeHookStatus?.managedHooksPresent == true
+            && claudeHookStatus?.managedCommandIsStale != true
     }
 
     var qoderHooksInstalled: Bool {
         qoderHookStatus?.managedHooksPresent == true
+            && qoderHookStatus?.managedCommandIsStale != true
     }
 
     var qwenCodeHooksInstalled: Bool {
         qwenCodeHookStatus?.managedHooksPresent == true
+            && qwenCodeHookStatus?.managedCommandIsStale != true
     }
 
     var factoryHooksInstalled: Bool {
         factoryHookStatus?.managedHooksPresent == true
+            && factoryHookStatus?.managedCommandIsStale != true
     }
 
     var codebuddyHooksInstalled: Bool {
         codebuddyHookStatus?.managedHooksPresent == true
+            && codebuddyHookStatus?.managedCommandIsStale != true
     }
 
     var openCodePluginInstalled: Bool {
@@ -154,18 +165,22 @@ final class HookInstallationCoordinator {
 
     var cursorHooksInstalled: Bool {
         cursorHookStatus?.managedHooksPresent == true
+            && cursorHookStatus?.managedCommandIsStale != true
     }
 
     var geminiHooksInstalled: Bool {
         geminiHookStatus?.managedHooksPresent == true
+            && geminiHookStatus?.managedCommandIsStale != true
     }
 
     var kimiHooksInstalled: Bool {
         kimiHookStatus?.managedHooksPresent == true
+            && kimiHookStatus?.managedCommandIsStale != true
     }
 
     var grokHooksInstalled: Bool {
         grokHookStatus?.managedHooksPresent == true
+            && grokHookStatus?.managedCommandIsStale != true
     }
 
     var piExtensionInstalled: Bool {
